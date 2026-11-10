@@ -1,0 +1,13 @@
+# Windows & PowerShell
+*.tmp
+*.temp
+*.log
+.psrecover_write_test_*.tmp
+
+# Recovered test outputs
+recovered/
+TestBench/
+
+# VS Code & IDE
+.vscode/
+.idea/
