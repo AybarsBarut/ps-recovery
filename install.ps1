@@ -33,8 +33,12 @@ if (-not [string]::IsNullOrWhiteSpace($PSScriptRoot)) {
     try {
         $localCandidate = Join-Path $PSScriptRoot "recover.ps1"
         if (Test-Path $localCandidate) {
-            Copy-Item -Path $localCandidate -Destination $targetScript -Force
-            Write-Host " [OK] Yerel recover.ps1 kopyalandi: $targetScript" -ForegroundColor Green
+            $srcPath = (Resolve-Path $localCandidate).Path
+            $dstPath = if (Test-Path $targetScript) { (Resolve-Path $targetScript).Path } else { "" }
+            if ($srcPath -ine $dstPath) {
+                Copy-Item -Path $localCandidate -Destination $targetScript -Force
+                Write-Host " [OK] Yerel recover.ps1 kopyalandi: $targetScript" -ForegroundColor Green
+            }
             $isLocal = $true
         }
     } catch {}
