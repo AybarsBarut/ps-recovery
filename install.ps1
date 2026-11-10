@@ -1,6 +1,6 @@
 # PS-Recover Kurulum Betigi (Windows PowerShell / PowerShell Core)
 # Tek satirda kurulum:
-# irm https://raw.githubusercontent.com/AybarsBarut/drive-recovery/main/install.ps1 | iex
+# irm https://raw.githubusercontent.com/AybarsBarut/ps-recovery/main/install.ps1 | iex
 
 try {
     [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -24,7 +24,7 @@ try {
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor [Net.SecurityProtocolType]::Tls13
 } catch {}
 
-$repo = "AybarsBarut/drive-recovery"
+$repo = "AybarsBarut/ps-recovery"
 $branch = "main"
 $isLocal = $false
 

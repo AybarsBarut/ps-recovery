@@ -742,7 +742,7 @@ function global:Install-PSRecoverProfile {
             [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor [Net.SecurityProtocolType]::Tls13
             $wc = New-Object System.Net.WebClient
             $wc.Encoding = [System.Text.Encoding]::UTF8
-            $rawScript = $wc.DownloadString("https://raw.githubusercontent.com/AybarsBarut/drive-recovery/main/recover.ps1")
+            $rawScript = $wc.DownloadString("https://raw.githubusercontent.com/AybarsBarut/ps-recovery/main/recover.ps1")
             [System.IO.File]::WriteAllText($targetScriptPath, $rawScript, [System.Text.Encoding]::UTF8)
             $copied = $true
         } catch {}

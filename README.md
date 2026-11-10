@@ -13,14 +13,14 @@ Sistem, PowerShell ortamında tek komutla (`recover`) veya uzaktan yürütme (`i
 Kurulum veya bağımlılık yapılandırması gerekmeksizin, Windows PowerShell (5.1 veya 7+) üzerinden doğrudan çalıştırılabilir:
 
 ```powershell
-irm https://raw.githubusercontent.com/AybarsBarut/drive-recovery/main/recover.ps1 | iex
+irm https://raw.githubusercontent.com/AybarsBarut/ps-recovery/main/recover.ps1 | iex
 ```
 
 ### Kalıcı Profil Entegrasyonu
 Aracı PowerShell ortamına kalıcı bir fonksiyon olarak kaydetmek için:
 
 ```powershell
-irm https://raw.githubusercontent.com/AybarsBarut/drive-recovery/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/AybarsBarut/ps-recovery/main/install.ps1 | iex
 ```
 
 Kurulum tamamlandıktan sonra herhangi bir terminal oturumunda `recover` komutu doğrudan çağrılabilir.
