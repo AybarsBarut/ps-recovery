@@ -1,6 +1,11 @@
 # PS-Recover Kurulum Betigi (Windows PowerShell / PowerShell Core)
 # Tek satirda kurulum:
-# irm https://raw.githubusercontent.com/4rchura/drive-recovery/main/install.ps1 | iex
+# irm https://raw.githubusercontent.com/AybarsBarut/drive-recovery/main/install.ps1 | iex
+
+param(
+    [string]$Repo = "AybarsBarut/drive-recovery",
+    [string]$Branch = "main"
+)
 
 try {
     [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -25,8 +30,8 @@ if (Test-Path $localRecover) {
     Copy-Item -Path $localRecover -Destination $targetScript -Force
     Write-Host " [OK] Yerel recover.ps1 kopyalandi: $targetScript" -ForegroundColor Green
 } else {
-    Write-Host " [*] PS-Recover ana betigi GitHub reposundan indiriliyor..." -ForegroundColor Cyan
-    $repoUrl = "https://raw.githubusercontent.com/4rchura/drive-recovery/main/recover.ps1"
+    Write-Host " [*] PS-Recover ana betigi GitHub reposundan ($Repo) indiriliyor..." -ForegroundColor Cyan
+    $repoUrl = "https://raw.githubusercontent.com/$Repo/$Branch/recover.ps1"
     try {
         $webClient = New-Object System.Net.WebClient
         $webClient.Encoding = [System.Text.Encoding]::UTF8

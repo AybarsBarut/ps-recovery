@@ -1,5 +1,5 @@
 # PS-Recover Kaldirma Betigi
-# irm https://raw.githubusercontent.com/4rchura/drive-recovery/main/uninstall.ps1 | iex
+# irm https://raw.githubusercontent.com/AybarsBarut/drive-recovery/main/uninstall.ps1 | iex
 
 try {
     [Console]::OutputEncoding = [System.Text.Encoding]::UTF8

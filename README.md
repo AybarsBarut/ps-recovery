@@ -10,14 +10,14 @@
 Hiçbir kurulum yapmadan, Git veya harici bir program yüklemeden, **Windows PowerShell**'i açıp aşağıdaki tek satırı yapıştırmanız yeterlidir:
 
 ```powershell
-irm https://raw.githubusercontent.com/4rchura/drive-recovery/main/recover.ps1 | iex
+irm https://raw.githubusercontent.com/AybarsBarut/drive-recovery/main/recover.ps1 | iex
 ```
 
 ### 📌 Kalıcı Olarak Sisteme Yüklemek İçin:
 PowerShell'i her açtığınızda doğrudan `recover` yazarak araca ulaşmak istiyorsanız:
 
 ```powershell
-irm https://raw.githubusercontent.com/4rchura/drive-recovery/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/AybarsBarut/drive-recovery/main/install.ps1 | iex
 ```
 
 ---
