@@ -2,11 +2,6 @@
 # Tek satirda kurulum:
 # irm https://raw.githubusercontent.com/AybarsBarut/drive-recovery/main/install.ps1 | iex
 
-param(
-    [string]$Repo = "AybarsBarut/drive-recovery",
-    [string]$Branch = "main"
-)
-
 try {
     [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 } catch {}
@@ -24,18 +19,38 @@ if (-not (Test-Path $installFolder)) {
 
 $targetScript = Join-Path $installFolder "recover.ps1"
 
-# Eger yerel depodan calisiyorsa yerel recover.ps1'i kopyala, degilse GitHub'dan indir
-$localRecover = Join-Path $PSScriptRoot "recover.ps1"
-if (Test-Path $localRecover) {
-    Copy-Item -Path $localRecover -Destination $targetScript -Force
-    Write-Host " [OK] Yerel recover.ps1 kopyalandi: $targetScript" -ForegroundColor Green
-} else {
-    Write-Host " [*] PS-Recover ana betigi GitHub reposundan ($Repo) indiriliyor..." -ForegroundColor Cyan
-    $repoUrl = "https://raw.githubusercontent.com/$Repo/$Branch/recover.ps1"
+# TLS 1.2 / TLS 1.3 zorunlulugu
+try {
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor [Net.SecurityProtocolType]::Tls13
+} catch {}
+
+$repo = "AybarsBarut/drive-recovery"
+$branch = "main"
+$isLocal = $false
+
+# 1. Eger yerel depodan calisiyorsa ve PSScriptRoot gecerliyse yerel dosyayi kopyala
+if (-not [string]::IsNullOrWhiteSpace($PSScriptRoot)) {
+    try {
+        $localCandidate = Join-Path $PSScriptRoot "recover.ps1"
+        if (Test-Path $localCandidate) {
+            Copy-Item -Path $localCandidate -Destination $targetScript -Force
+            Write-Host " [OK] Yerel recover.ps1 kopyalandi: $targetScript" -ForegroundColor Green
+            $isLocal = $true
+        }
+    } catch {}
+}
+
+# 2. Yerel dosya bulunamadiysa veya irm ... | iex ile calistiriliyorsa GitHub'dan indir
+if (-not $isLocal) {
+    Write-Host " [*] PS-Recover ana betigi GitHub reposundan ($repo) indiriliyor..." -ForegroundColor Cyan
+    $repoUrl = "https://raw.githubusercontent.com/$repo/$branch/recover.ps1"
     try {
         $webClient = New-Object System.Net.WebClient
         $webClient.Encoding = [System.Text.Encoding]::UTF8
         $scriptContent = $webClient.DownloadString($repoUrl)
+        if ([string]::IsNullOrWhiteSpace($scriptContent)) {
+            throw "Indirilen betik icerigi bos!"
+        }
         [System.IO.File]::WriteAllText($targetScript, $scriptContent, [System.Text.Encoding]::UTF8)
         Write-Host " [OK] En guncel betik basariyla indirildi: $targetScript" -ForegroundColor Green
     } catch {
@@ -44,7 +59,13 @@ if (Test-Path $localRecover) {
     }
 }
 
-# PowerShell Profiline ekleme
+# 3. Dosyanin varligini kesin dogrula
+if (-not (Test-Path $targetScript)) {
+    Write-Host " [!] Kritik Hata: recover.ps1 dosyasina erisilemiyor ($targetScript)." -ForegroundColor Red
+    return
+}
+
+# 4. PowerShell Profiline ekleme
 $profileDir = Split-Path $PROFILE -Parent
 if (-not (Test-Path $profileDir)) {
     New-Item -ItemType Directory -Path $profileDir -Force | Out-Null
@@ -81,8 +102,8 @@ Write-Host "  duzeltebilirsiniz." -ForegroundColor White
 Write-Host " ---------------------------------------------------------------------------" -ForegroundColor Cyan
 Write-Host ""
 
-# Hemen calistir
+# 5. Mevcut oturumda betigi calistir
 Write-Host " [*] PS-Recover simdi baslatiliyor..." -ForegroundColor Yellow
-Start-Sleep -Milliseconds 800
+Start-Sleep -Milliseconds 500
 . "$targetScript"
 recover

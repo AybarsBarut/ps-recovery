@@ -718,14 +718,34 @@ function global:Install-PSRecoverProfile {
 
     $targetScriptPath = Join-Path $installFolder "recover.ps1"
     
+    $copied = $false
     $currentScript = $MyInvocation.MyCommand.Definition
     if ($currentScript -and (Test-Path $currentScript)) {
-        Copy-Item -Path $currentScript -Destination $targetScriptPath -Force
-    } else {
-        $thisFile = $PSScriptRoot + "\recover.ps1"
-        if (Test-Path $thisFile) {
-            Copy-Item -Path $thisFile -Destination $targetScriptPath -Force
-        }
+        try {
+            Copy-Item -Path $currentScript -Destination $targetScriptPath -Force
+            $copied = $true
+        } catch {}
+    }
+    
+    if (-not $copied -and (-not [string]::IsNullOrWhiteSpace($PSScriptRoot))) {
+        try {
+            $thisFile = Join-Path $PSScriptRoot "recover.ps1"
+            if (Test-Path $thisFile) {
+                Copy-Item -Path $thisFile -Destination $targetScriptPath -Force
+                $copied = $true
+            }
+        } catch {}
+    }
+
+    if (-not $copied -and (-not (Test-Path $targetScriptPath))) {
+        try {
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor [Net.SecurityProtocolType]::Tls13
+            $wc = New-Object System.Net.WebClient
+            $wc.Encoding = [System.Text.Encoding]::UTF8
+            $rawScript = $wc.DownloadString("https://raw.githubusercontent.com/AybarsBarut/drive-recovery/main/recover.ps1")
+            [System.IO.File]::WriteAllText($targetScriptPath, $rawScript, [System.Text.Encoding]::UTF8)
+            $copied = $true
+        } catch {}
     }
 
     $profileDir = Split-Path $PROFILE -Parent
