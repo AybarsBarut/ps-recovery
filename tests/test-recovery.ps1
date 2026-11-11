@@ -1,19 +1,18 @@
-# PS-Recover Otomatik Test Paketi (Unit & Integration Tests)
-# Bu betik sanal bir depolama ortami olusturarak dosya kurtarma motorunu,
-# kisayol virusu temizleme modunu, filtreleme ve raporlama ozelliklerini test eder.
+# PS-Recover Automated Test Suite (Unit & Integration Tests)
+# Validates drive enumeration, file recovery engine, shortcut virus cleaning,
+# file extension filtering, reporting, and multilingual support (EN & TR).
 
 $ErrorActionPreference = "Stop"
 
 Write-Host "===========================================================================" -ForegroundColor Cyan
-Write-Host "               PS-RECOVER TEST VE DOGRULAMA CALISMASI                      " -ForegroundColor Yellow
+Write-Host "               PS-RECOVER TEST AND VERIFICATION SUITE                      " -ForegroundColor Yellow
 Write-Host "===========================================================================" -ForegroundColor Cyan
 
-# 1. Ortami Hazirla
 $scriptRoot = Split-Path $MyInvocation.MyCommand.Path -Parent
 $repoRoot = Split-Path $scriptRoot -Parent
 $recoverScript = Join-Path $repoRoot "recover.ps1"
 
-Write-Host " [*] recover.ps1 yukleniyor: $recoverScript" -ForegroundColor Gray
+Write-Host " [*] Loading recover.ps1: $recoverScript" -ForegroundColor Gray
 $env:PS_RECOVER_DONOTRUN = "1"
 $env:PS_RECOVER_NONINTERACTIVE = "1"
 . $recoverScript
@@ -31,7 +30,6 @@ New-Item -ItemType Directory -Path (Join-Path $mockSource "Fotograflar") -Force 
 New-Item -ItemType Directory -Path (Join-Path $mockSource "GizliKlasor") -Force | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $mockSource "VirusSimulasyonu") -Force | Out-Null
 
-# Test Dosyalari Olustur
 $docFile = Join-Path $mockSource "Belgeler\Tez_Calismasi.docx"
 $photoFile = Join-Path $mockSource "Fotograflar\Tatil_2025.jpg"
 $secretFile = Join-Path $mockSource "GizliKlasor\GizliVeri.pdf"
@@ -44,13 +42,11 @@ $lnkVirus = Join-Path $mockSource "VirusSimulasyonu\Belgeler.lnk"
 [System.IO.File]::WriteAllText($readOnlyFile, "Bu dosya salt okunur olarak kilitlendi.")
 [System.IO.File]::WriteAllText($lnkVirus, "Fake Shortcut Worm")
 
-# Oznitelikleri ayarla (Gizli, Sistem, Salt Okunur)
 [System.IO.File]::SetAttributes($secretFile, [System.IO.FileAttributes]::Hidden -bor [System.IO.FileAttributes]::System)
 [System.IO.File]::SetAttributes($readOnlyFile, [System.IO.FileAttributes]::ReadOnly)
 
-Write-Host " [OK] Sanal test ortami basariyla olusturuldu." -ForegroundColor Green
+Write-Host " [OK] Mock test bench environment created successfully." -ForegroundColor Green
 
-# 2. Sahte Disk Nesnesi Olustur
 $mockDisk = [PSCustomObject]@{
     Index             = 99
     DriveLetter       = "M:"
@@ -73,105 +69,114 @@ $mockDisk = [PSCustomObject]@{
     OperationalStatus = "OK"
 }
 
-# 3. Test 1: Sürücü Listeleme Fonksiyonunu Test Et
+# TEST 1: Drive Listing
 Write-Host ""
-Write-Host ">> TEST 1: Get-PSRecoverDriveList Testi..." -ForegroundColor Yellow
+Write-Host ">> TEST 1: Drive Listing (Get-PSRecoverDriveList)..." -ForegroundColor Yellow
 $drives = @(Get-PSRecoverDriveList)
 if ($drives -and $drives.Count -gt 0) {
-    Write-Host " [BASARILI] Sistemde $($drives.Count) adet surucu basariyla listelendi." -ForegroundColor Green
-    Write-Host " Ilk surucu: $($drives[0].DriveLetter) - $($drives[0].DiskModel)" -ForegroundColor Gray
+    Write-Host " [PASSED] Enumerated $($drives.Count) drive(s) on system." -ForegroundColor Green
+    Write-Host " Primary drive: $($drives[0].DriveLetter) - $($drives[0].DiskModel)" -ForegroundColor Gray
 } else {
-    throw "Surucu listesi bos dondu!"
+    throw "Drive list returned empty!"
 }
 
-# 4. Test 2: Tum Dosyalari Kurtarma (Mode: All) Testi
+# TEST 2: Full Recovery in English (Mode: All, Lang: en)
 Write-Host ""
-Write-Host ">> TEST 2: Tam Disk Kurtarma (Mode: All)..." -ForegroundColor Yellow
-
-# Desktop ortam degiskenini gecici olarak test klasorune yonlendirelim
-$originalDesktop = [Environment]::GetEnvironmentVariable("USERPROFILE")
+Write-Host ">> TEST 2: Full Disk Recovery in English (Mode: All, Lang: en)..." -ForegroundColor Yellow
+Set-PSRecoverLanguage "en"
 $recoveredBase = Join-Path ([Environment]::GetFolderPath("Desktop")) "recovered"
 
 Invoke-FileRecoveryEngine -SelectedDrive $mockDisk -Mode "All"
 
-# Kontrol: Masaustunde recovered klasoru olustu mu?
 if (Test-Path $recoveredBase) {
     $latestRecovery = Get-ChildItem -Path $recoveredBase -Directory | Sort-Object CreationTime -Descending | Select-Object -First 1
-    Write-Host " [OK] Kurtarma oturumu olusturuldu: $($latestRecovery.FullName)" -ForegroundColor Green
+    Write-Host " [OK] Recovery folder created: $($latestRecovery.FullName)" -ForegroundColor Green
 
-    # Kurtarilan dosyalari kontrol et
     $recDoc = Join-Path $latestRecovery.FullName "Belgeler\Tez_Calismasi.docx"
     $recSecret = Join-Path $latestRecovery.FullName "GizliKlasor\GizliVeri.pdf"
     $recReadOnly = Join-Path $latestRecovery.FullName "Belgeler\SaltOkunurSozlesme.txt"
-    $reportTxt = Join-Path $latestRecovery.FullName "kurtarma_raporu.txt"
+    $reportEn = Join-Path $latestRecovery.FullName "recovery_report.txt"
 
     if (Test-Path $recDoc) {
-        Write-Host " [BASARILI] Belge dosyasi kurtarildi: $recDoc" -ForegroundColor Green
+        Write-Host " [PASSED] Document recovered: $recDoc" -ForegroundColor Green
     } else {
-        throw "Belge dosyasi kurtarilamadi!"
+        throw "Document file was not recovered!"
     }
 
     if (Test-Path $recSecret) {
-        Write-Host " [BASARILI] Gizli dosya kurtarildi: $recSecret" -ForegroundColor Green
+        Write-Host " [PASSED] Hidden system file recovered: $recSecret" -ForegroundColor Green
     } else {
-        throw "Gizli dosya kurtarilamadi!"
+        throw "Hidden file was not recovered!"
     }
 
     if (Test-Path $recReadOnly) {
-        # Ozniteligin Normal yapildigini kontrol et
         $attr = (Get-Item $recReadOnly).Attributes
         if (-not ($attr -band [System.IO.FileAttributes]::ReadOnly)) {
-            Write-Host " [BASARILI] Salt okunur dosya kurtarildi ve kilidi Normal olarak acildi!" -ForegroundColor Green
+            Write-Host " [PASSED] Read-only attribute cleared to Normal!" -ForegroundColor Green
         } else {
-            throw "Kurtarilan dosyadaki salt okunur oznitelik temizlenememis!"
+            throw "Read-only attribute was not normalized!"
         }
     } else {
-        throw "Salt okunur dosya kurtarilamadi!"
+        throw "Read-only file was not recovered!"
     }
 
-    if (Test-Path $reportTxt) {
-        Write-Host " [BASARILI] Kurtarma raporu olusturuldu:" -ForegroundColor Green
-        Get-Content $reportTxt | Select-Object -First 12 | ForEach-Object { Write-Host "   $_" -ForegroundColor Gray }
+    if (Test-Path $reportEn) {
+        Write-Host " [PASSED] English report generated: $reportEn" -ForegroundColor Green
     } else {
-        throw "Kurtarma rapor dosyasi bulunamadi!"
+        throw "English report file (recovery_report.txt) not found!"
     }
 } else {
-    throw "Desktop\recovered klasoru olusturulamadi!"
+    throw "Desktop\recovered folder was not created!"
 }
 
-# 5. Test 3: Kısayol Virüsü Temizleme Modu Testi (Mode: Unhide)
+# TEST 3: Recovery in Turkish (Mode: All, Lang: tr)
 Write-Host ""
-Write-Host ">> TEST 3: Kisayol Virusu Temizleme Modu (Mode: Unhide)..." -ForegroundColor Yellow
-Invoke-FileRecoveryEngine -SelectedDrive $mockDisk -Mode "Unhide"
-$latestRecovery2 = Get-ChildItem -Path $recoveredBase -Directory | Sort-Object CreationTime -Descending | Select-Object -First 1
-$recLnk = Join-Path $latestRecovery2.FullName "VirusSimulasyonu\Belgeler.lnk"
-if (-not (Test-Path $recLnk)) {
-    Write-Host " [BASARILI] Zararli .lnk kisayol dosyasi basariyla filtrelendi ve atlandi." -ForegroundColor Green
+Write-Host ">> TEST 3: Full Disk Recovery in Turkish (Mode: All, Lang: tr)..." -ForegroundColor Yellow
+Set-PSRecoverLanguage "tr"
+Start-Sleep -Milliseconds 1200
+Invoke-FileRecoveryEngine -SelectedDrive $mockDisk -Mode "All"
+
+$latestRecoveryTr = Get-ChildItem -Path $recoveredBase -Directory | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+$reportTr = Join-Path $latestRecoveryTr.FullName "kurtarma_raporu.txt"
+if (Test-Path $reportTr) {
+    Write-Host " [PASSED] Turkish report generated: $reportTr" -ForegroundColor Green
 } else {
-    Write-Host " [!] .lnk dosyasi kopyalandi (dikkat)." -ForegroundColor Yellow
+    throw "Turkish report file (kurtarma_raporu.txt) not found!"
 }
 
-# 6. Test 4: Dosya Turune Gore Filtreleme (Mode: Preset - PDF only)
+# TEST 4: Shortcut Virus Cleanup (Mode: Unhide)
 Write-Host ""
-Write-Host ">> TEST 4: Uzanti Filtreleme Modu (Sadece .pdf)..." -ForegroundColor Yellow
+Write-Host ">> TEST 4: Shortcut Virus Cleanup Mode (Mode: Unhide)..." -ForegroundColor Yellow
+Invoke-FileRecoveryEngine -SelectedDrive $mockDisk -Mode "Unhide"
+$latestRecoveryUnhide = Get-ChildItem -Path $recoveredBase -Directory | Sort-Object CreationTime -Descending | Select-Object -First 1
+$recLnk = Join-Path $latestRecoveryUnhide.FullName "VirusSimulasyonu\Belgeler.lnk"
+if (-not (Test-Path $recLnk)) {
+    Write-Host " [PASSED] Malicious .lnk shortcut file was filtered and skipped." -ForegroundColor Green
+} else {
+    Write-Host " [!] .lnk file copied (warning)." -ForegroundColor Yellow
+}
+
+# TEST 5: File Type Extension Filtering (.pdf only)
+Write-Host ""
+Write-Host ">> TEST 5: Extension Filtering Mode (.pdf only)..." -ForegroundColor Yellow
 Start-Sleep -Milliseconds 1200
 Invoke-FileRecoveryEngine -SelectedDrive $mockDisk -Mode "Preset" -Extensions @(".pdf")
-$latestRecovery3 = Get-ChildItem -Path $recoveredBase -Directory | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-$recDoc3 = Join-Path $latestRecovery3.FullName "Belgeler\Tez_Calismasi.docx"
-$recPdf3 = Join-Path $latestRecovery3.FullName "GizliKlasor\GizliVeri.pdf"
+$latestRecoveryPreset = Get-ChildItem -Path $recoveredBase -Directory | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+$recDocPreset = Join-Path $latestRecoveryPreset.FullName "Belgeler\Tez_Calismasi.docx"
+$recPdfPreset = Join-Path $latestRecoveryPreset.FullName "GizliKlasor\GizliVeri.pdf"
 
-if ((-not (Test-Path $recDoc3)) -and (Test-Path $recPdf3)) {
-    Write-Host " [BASARILI] Sadece PDF dosyasi kurtarildi, docx filtrelendi." -ForegroundColor Green
+if ((-not (Test-Path $recDocPreset)) -and (Test-Path $recPdfPreset)) {
+    Write-Host " [PASSED] Only PDF files were recovered; docx was filtered." -ForegroundColor Green
 } else {
-    throw "Uzanti filtreleme testi basarisiz!"
+    throw "Extension filtering test failed!"
 }
 
-# 7. Temizlik
+# Cleanup
 Write-Host ""
-Write-Host " [*] Test ortami temizleniyor..." -ForegroundColor Gray
+Write-Host " [*] Cleaning up mock environment..." -ForegroundColor Gray
 Remove-Item $testBench -Recurse -Force -ErrorAction SilentlyContinue
 
 Write-Host ""
 Write-Host "===========================================================================" -ForegroundColor Green
-Write-Host "               TUM TESTLER BASARIYLA TAMAMLANDI (PASSED)                  " -ForegroundColor Green
+Write-Host "               ALL TESTS COMPLETED SUCCESSFULLY (PASSED)                   " -ForegroundColor Green
 Write-Host "===========================================================================" -ForegroundColor Green

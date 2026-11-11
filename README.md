@@ -1,72 +1,95 @@
 # PS-Recover
 
-**Windows Depolama Kurtarma ve Flash Bellek Onarım Motoru**
-
-PS-Recover, Windows platformunda harici depolama aygıtları, USB flash bellekler ve dahili diskler için geliştirilmiş, harici bağımlılık gerektirmeyen (zero-dependency) bir dosya kurtarma ve tanılama aracıdır.
-
-Sistem, PowerShell ortamında tek komutla (`recover`) veya uzaktan yürütme (`iex`) protokolüyle doğrudan bellek üzerinden çalıştırılabilir.
+**Language / Dil / Sprache / Idioma:** [English](README.md) | [Türkçe](README.tr.md) | [Deutsch](README.de.md) | [Español](README.es.md)
 
 ---
 
-## Hızlı Başlangıç
+**Windows Storage Recovery & Flash Drive Repair Engine**
 
-Kurulum veya bağımlılık yapılandırması gerekmeksizin, Windows PowerShell (5.1 veya 7+) üzerinden doğrudan çalıştırılabilir:
+PS-Recover is a zero-dependency PowerShell file recovery, diagnostics, and storage repair tool for Windows. It is specifically designed to recover data from USB flash drives, SD cards, external hard drives, and internal storage devices, while also diagnosing and repairing write-protected (read-only) flash drives.
+
+The engine can be executed directly in memory via an interactive one-liner (`irm ... | iex`) or installed permanently as a native PowerShell function (`recover`).
+
+---
+
+## Quick Start
+
+### Direct In-Memory Execution
+Run directly in Windows PowerShell (5.1 or 7+) without installation:
 
 ```powershell
 irm https://raw.githubusercontent.com/AybarsBarut/ps-recovery/main/recover.ps1 | iex
 ```
 
-### Kalıcı Profil Entegrasyonu
-Aracı PowerShell ortamına kalıcı bir fonksiyon olarak kaydetmek için:
+### Persistent Profile Installation
+To install the tool permanently into your PowerShell profile:
 
 ```powershell
 irm https://raw.githubusercontent.com/AybarsBarut/ps-recovery/main/install.ps1 | iex
 ```
 
-Kurulum tamamlandıktan sonra herhangi bir terminal oturumunda `recover` komutu doğrudan çağrılabilir.
+Once installed, simply type `recover` in any terminal session.
 
 ---
 
-## Temel Kabiliyetler
+## Multilingual Support
 
-### 1. Donanım ve Mantıksal Sürücü Taraması
-- Windows Storage Management API (`Get-Volume`, `Get-Partition`, `Get-Disk`) ve CIM/WMI geri dönüş mekanizması üzerinden bağlı tüm depolama aygıtlarını listeler.
-- Fiziksel disk modeli, birim etiketi, veri yolu türü (USB, NVMe, SATA), dosya sistemi (NTFS, FAT32, exFAT), toplam kapasite ve boş alan metriklerini sunar.
-- Aygıt düzeyindeki salt okunur (read-only) durumunu ve işletim sistemi korumalı birimleri otomatik olarak sınıflandırır.
+PS-Recover provides full bilingual support (English and Turkish) for all menus, tables, logs, error diagnostics, and report files.
 
-### 2. Dayanıklı Veri Kurtarma Motoru
-- Seçilen aygıttaki dosyaları kaynak dizin hiyerarşisini koruyarak `[Desktop]\recovered\Kurtarma_<Harf>_<ZamanDamgası>` hedefine aktarır.
-- Okunamayan veya bozuk sektör içeren dosyalar durumunda işlem kesintiye uğramaz; akış tabanlı okuma denemesi yapılır ve sonuç hata günlüğüne işlenerek işlem sürdürülür.
-- Çakışma önleyici zaman damgası ve benzersiz oturum dizinleri sayesinde önceki kurtarma verileri korunur.
-
-### 3. Kısayol Zararlısı Temizliği ve Öznitelik Normalizasyonu
-- USB belleklerde sık karşılaşılan klasör gizleme ve `.lnk` / `.vbs` kısayol zararlılarının gizlediği verileri tespit eder.
-- Kurtarılan dosyalardaki kısıtlayıcı dosya sistemi özniteliklerini (`ReadOnly`, `Hidden`, `System`) otomatik olarak `Normal` durumuna getirir.
-
-### 4. Çok Kriterli Dosya Filtreleme
-- Tam disk imajı yedeğinin yanı sıra belirli dosya kategorilerine göre seçici kurtarma yapılabilir:
-  - Belgeler: PDF, DOCX, XLSX, PPTX, TXT, CSV, RTF
-  - Medya: JPG, PNG, RAW, CR2, NEF, HEIC, MP4, MKV, WAV, FLAC
-  - Arşivler: ZIP, RAR, 7Z, TAR, GZ, ISO
-  - Geliştirme: PY, JS, TS, CS, CPP, SQL, JSON
-  - Kullanıcı tanımlı uzantı listeleri
-
-### 5. Salt Okunur (Yazma Korumalı) Flash Bellek Tanılama ve Onarım Hattı
-Yazma koruması bulunan aygıtlar için güvenlik öncelikli bir onarım süreci yürütür:
-1. **Ön Güvenlik Yedeklemesi:** Kontrolcüye stres bindirebilecek onarım adımlarından önce bellekteki tüm okunabilir veriler masaüstüne yedeklenir.
-2. **Diskpart Öznitelik Sıfırlama:** Fiziksel disk ve mantıksal birim düzeyindeki `readonly` bayrakları temizlenir.
-3. **Storage API Konfigürasyonu:** `Set-Disk -IsReadOnly $false` çağrısı ile çekirdek düzeyindeki koruma bayrağı kaldırılır.
-4. **Kayıt Defteri Denetimi:** `HKLM:\SYSTEM\CurrentControlSet\Control\StorageDevicePolicies\WriteProtect` anahtarı sıfırlanır.
-5. **Dosya Sistemi Onarımı:** Chkdsk entegrasyonuyla dirty-bit ve indeks tutarsızlıkları düzeltilir.
-6. **Donanımsal Denetim ve Teşhis:** Aygıta test verisi yazılarak kontrolcünün durumu doğrulanır. Yazılımsal kilitler kalkmasına rağmen yazma reddediliyorsa, bellek yongalarının yıpranma korumasına (NAND hardware ROM mode) geçtiği net bir şekilde raporlanır.
-
-### 6. Raporlama ve Denetim İzi
-- İşlem tamamlandığında kurtarma oturumunun metrikleri terminale basılır.
-- Oturum klasörü içerisinde her bir dosyanın boyutunu, bağıl yolunu ve kurtarma durumunu listeleyen UTF-8 kodlamalı `kurtarma_raporu.txt` dosyası üretilir.
+- **CLI Flag:** Specify language on launch:
+  ```powershell
+  recover -Lang en    # English
+  recover -Lang tr    # Turkish
+  ```
+- **Interactive Switcher:** Press `[L]` in the main menu at any time to toggle between English and Turkish.
+- **Preference Persistence:** Your language choice is automatically remembered across sessions in `~/.ps-recover/lang.conf`.
+- **System Culture Detection:** When no preference is set, PS-Recover automatically aligns with your Windows display language.
 
 ---
 
-## Terminal Arayüzü
+## Core Capabilities
+
+### 1. Storage Device & Logical Volume Discovery
+- Detects physical disks and logical volumes using the Windows Storage Management API (`Get-Volume`, `Get-Partition`, `Get-Disk`) with CIM/WMI fallback.
+- Displays disk model, volume label, bus interface (USB, NVMe, SATA), file system (NTFS, FAT32, exFAT), total capacity, and free space metrics.
+- Automatically flags read-only volumes and protects system drives against accidental operations.
+
+### 2. Resilient Data Recovery Engine
+- Safely extracts files from damaged or unstable drives into `[Desktop]\recovered\Recovery_<Letter>_<Timestamp>`.
+- Preserves full directory hierarchies.
+- Incorporates stream-based fallback reading for drives with bad sectors or I/O timeouts, continuing execution without aborting the session.
+- Automatically normalizes file permissions and clears restrictive attributes (`ReadOnly`, `Hidden`, `System`) so recovered files are immediately usable.
+
+### 3. Shortcut Virus Remediation & Hidden Data Extraction
+- Scans for and unhides real folders and files concealed by common USB shortcut worms (`.lnk`, `.vbs`, `.wsf`).
+- Bypasses malicious script shortcuts and salvages the original obscured payload.
+
+### 4. Multi-Criteria File Filtering
+- Allows targeted extraction in addition to full drive imaging:
+  - **Documents:** PDF, DOCX, XLSX, PPTX, TXT, CSV, RTF, ODT
+  - **Photos & Images:** JPG, PNG, GIF, BMP, RAW, CR2, NEF, HEIC, PSD
+  - **Videos:** MP4, MKV, AVI, MOV, WMV, FLV, WEBM
+  - **Audio:** MP3, WAV, FLAC, AAC, M4A, OGG
+  - **Archives:** ZIP, RAR, 7Z, TAR, GZ, ISO
+  - **Development:** PY, JS, TS, HTML, CSS, CS, CPP, SQL, JSON
+  - **Custom Extensions:** User-specified comma-separated extension lists
+
+### 5. Read-Only (Write-Protected) Flash Drive Repair Pipeline
+For flash drives locked in read-only mode, PS-Recover executes a safety-first recovery and repair workflow:
+1. **Safety Backup:** Before running stress-inducing repair commands, all readable files are backed up to the desktop.
+2. **Diskpart Attribute Reset:** Clears `readonly` attributes on both physical disk and logical volume levels.
+3. **Storage API Configuration:** Unsets `IsReadOnly` and offline flags at kernel level via `Set-Disk`.
+4. **Windows Registry Inspection:** Checks and resets `HKLM:\SYSTEM\CurrentControlSet\Control\StorageDevicePolicies\WriteProtect`.
+5. **File System Repair:** Invokes `chkdsk /f` to resolve dirty-bit locks and file allocation table corruption.
+6. **Hardware Write Verification & NAND Diagnosis:** Performs a hardware write test. If software locks are cleared but writes fail, PS-Recover accurately diagnoses that the NAND flash controller has entered permanent hardware wear-out ROM mode, protecting user data from false repair assumptions.
+
+### 6. Audit Trail & Detailed TXT Reports
+- Generates a UTF-8 encoded report file (`recovery_report.txt` in English, `kurtarma_raporu.txt` in Turkish) in the session folder.
+- Records volume metadata, scanned file count, recovered byte totals, elapsed time, and per-file recovery status.
+
+---
+
+## Terminal Interface
 
 ```text
  ===========================================================================
@@ -76,47 +99,55 @@ Yazma koruması bulunan aygıtlar için güvenlik öncelikli bir onarım süreci
   |  __/ ___) |_____|  _ <  __/ (_| (_) \ V /  __/ |  | |_| |      
   |_|   |____/      |_| \_\___|\___\___/ \_/ \___|_|   \__, |      
                                                         |___/       
-       Windows Disk, USB & Flash Bellek Kurtarma Araci v1.0         
+       Windows Storage Recovery & Flash Drive Repair Engine v1.0         
  ===========================================================================
- [i] Oturum Modu: YONETICI (ADMIN) - Tum diskpart ve kilit acma yetkileri aktif
+ [i] Session Mode: ADMINISTRATOR - All diskpart and unlock privileges active
 
- TAKILI DISKLER VE DEPOLAMA BIRIMLERI:
+ CONNECTED DISKS AND STORAGE VOLUMES:
  ---------------------------------------------------------------------------------------------
- #    SURUCU MODEL / ETIKET           TUR                FS         TOPLAM   BOS ALAN  DURUM
+ #    DRIVE  MODEL / LABEL            TYPE               FS          TOTAL FREE SPACE  STATUS
  ---------------------------------------------------------------------------------------------
- [1]  C:     CT1000P3PSSD8            NVMe SSD (Dahili)  NTFS    930.26 GB  191.81 GB  [SISTEM DISKI]
- [2]  E:     YEDEK (Kingston DT 3.0)  USB Flash / Harici FAT32    29.80 GB   14.20 GB  [SALT OKUNUR / KILITLI]
+ [1]  C:     CT1000P3PSSD8            NVMe SSD (Internal) NTFS    930.26 GB  191.81 GB  [SYSTEM DRIVE]
+ [2]  E:     BACKUP (Kingston DT 3.0) USB Flash / External FAT32   29.80 GB   14.20 GB  [READ-ONLY / LOCKED]
  ---------------------------------------------------------------------------------------------
+
+ OPTIONS:
+  [1-2] Select a disk to start recovery/repair operations
+  [R]   Rescan disks (if you plugged in a new drive)
+  [P]   Permanently install 'recover' command to PowerShell profile
+  [L]   Change Language / Dili Degistir (Current: English)
+  [Q]   Exit
 ```
 
 ---
 
-## Komut Parametreleri
+## Command Parameters
 
-| Parametre | Açıklama |
+| Parameter | Description |
 |---|---|
-| `recover` | Etkileşimli ana menüyü başlatır. |
-| `recover -List` | Takılı diskleri ve durumlarını tablo formatında listeler ve sonlanır. |
-| `recover -Install` | Aracı geçerli PowerShell profil dosyasına kalıcı olarak kaydeder. |
-| `recover -Uninstall` | Profil kaydını ve yerel çalışma dosyalarını sistemden temizler. |
-| `recover -Help` | Parametre ve kullanım yardımını görüntüler. |
+| `recover` | Launches the interactive terminal menu. |
+| `recover -List` | Displays connected storage devices and exit. |
+| `recover -Install` | Permanently registers `recover` in your PowerShell profile. |
+| `recover -Uninstall` | Uninstalls the tool and cleans up local profile entries. |
+| `recover -Lang <en\|tr>` | Overrides interface language (`en` for English, `tr` for Turkish). |
+| `recover -Help` | Displays command line usage and parameter documentation. |
 
 ---
 
-## Yazma Koruması Tanılama Modeli
+## Write-Protection Diagnostic Model
 
-Flash belleklerde salt okunur durum iki temel kaynaktan kaynaklanır:
+Flash memory write-protection originates from two fundamentally different sources:
 
-| Kilit Türü | Mekanizma | Çözüm Yaklaşımı |
+| Lock Category | Root Mechanism | Resolution Approach |
 |---|---|---|
-| **Yazılımsal Kilit** | Diskpart öznitelikleri, Windows Kayıt Defteri kısıtlamaları, dosya izinleri veya güvensiz çıkarma sonucu oluşan dosya sistemi `dirty bit` bayrağı. | PS-Recover tüm mantıksal katmanlardaki kilitleri temizler ve birimi yeniden yazılabilir hale getirir. |
-| **Donanımsal Koruma (NAND Wear-Out)** | Bellek kontrolcüsü, aşınmış bellek blokları veya kritik bad-sector artışı tespit ettiğinde veri kaybını önlemek için kalıcı salt okunur (Hardware ROM) moduna geçer. | Donanımsal kilit geri döndürülemez. PS-Recover **önce tüm verileri masaüstüne kurtarır**, ardından durumu tespit ederek veri kaybı riskini ortadan kaldırır. |
+| **Software Lock** | Diskpart flags, Windows Registry policies, file permissions, or unclosed file system `dirty bit` flags caused by unsafe removal. | PS-Recover clears all logical lock layers, resets Registry policies, repairs the file system, and restores write capability. |
+| **Hardware Protection (NAND Wear-Out)** | When flash memory cells reach maximum write endurance cycles or critical bad sector thresholds, the hardware controller permanently locks into ROM mode to prevent catastrophic data loss. | Hardware locks cannot be bypassed through software. PS-Recover **rescues all data to your desktop first**, diagnoses the hardware failure, and prevents further corruption. |
 
 ---
 
-## Test ve Doğrulama
+## Testing & Verification
 
-Sanal depolama ortamında birim ve entegrasyon testlerini çalıştırmak için:
+Run the automated unit and integration test suite:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\tests\test-recovery.ps1
@@ -124,6 +155,22 @@ powershell -ExecutionPolicy Bypass -File .\tests\test-recovery.ps1
 
 ---
 
-## Lisans
+## Uninstallation
 
-Bu proje [MIT Lisansı](LICENSE) kapsamında açık kaynak olarak yayımlanmıştır.
+To remove PS-Recover completely from your system:
+
+```powershell
+irm https://raw.githubusercontent.com/AybarsBarut/ps-recovery/main/uninstall.ps1 | iex
+```
+
+Or from an existing installation:
+
+```powershell
+recover -Uninstall
+```
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
